@@ -1,4 +1,6 @@
 import edu.princeton.cs.algs4.In;
+import edu.princeton.cs.algs4.Queue;
+import edu.princeton.cs.algs4.StdOut;
 import edu.princeton.cs.algs4.TST;
 
 import java.io.BufferedWriter;
@@ -8,51 +10,41 @@ import java.util.Scanner;
 
 public class SpellCheckTest<Value> {
 
-    @edu.umd.cs.findbugs.annotations.SuppressFBWarnings("DM_DEFAULT_ENCODING")
     public static void spellCheck(In string_array, TST data) throws IOException {
         BufferedWriter writer = new BufferedWriter(new FileWriter("mydoc-checked.txt"));
         while (string_array.hasNextLine()) {
             try {
                 String word = string_array.readString();
-                if (data.get(word) == null) {
+                if (!data.contains(word)) {
                     System.out.println(word + " did you mean:");
-                    String[] data1 = new String[data.size()];
-                    int i = 0;
-                    for (Object s : data.keysWithPrefix(word.substring(0, 2))) {
+                    Queue<String> suggestions = new Queue<>();
 
-                        try {
-                            if (s.toString().length() > word.length()) break;
-                            data1[i] = s.toString();
-                            i++;
-                        }
-                        catch (java.lang.ArrayIndexOutOfBoundsException e) {
-                            break;
-                        }
+                    for (Object thingy : data.keysWithPrefix(word.substring(0, 2))) {
+                        String s = (String) thingy;
+                        if (s.length() > word.length() + 2) continue;
+                        suggestions.enqueue(s);
                     }
-                    for (int j = 0; j < data1.length; j++) {
-                        if (data1[j] == null) break;
-                        System.out.println((j + 1) + ". " + data1[j]);
+                    String[] strSuggestions = new String[suggestions.size()];
+                    for (int i = 0; i < strSuggestions.length; i++) {
+                        strSuggestions[i] = suggestions.dequeue();
+                    }
+                    int i = 1;
+                    for (String s : strSuggestions) {
+                        System.out.println(i++ + ". " + s);
                     }
                     System.out.println("0. Something else:");
                     Scanner input = new Scanner(System.in);
                     int chosenValue = input.nextInt();
-                    if (chosenValue == 1) {
-                        writer.write(data1[0] + "\n");
-                    }
-                    else if (chosenValue == 2) {
-                        writer.write(data1[1] + "\n");
-                    }
-                    else if (chosenValue == 3) {
-                        writer.write(data1[2] + "\n");
-                    }
+                    if (chosenValue > 0 && chosenValue < strSuggestions.length)
+                        writer.write(strSuggestions[chosenValue - 1] + " ");
                     else {
                         System.out.println("What word did you want?" + "\n");
                         String userInput = input.next();
-                        writer.write(userInput + "\n");
+                        writer.write(userInput + " ");
                     }
                 }
                 else {
-                    writer.write(word + "\n");
+                    writer.write(word + " ");
                 }
             }
             catch (java.util.NoSuchElementException e) {
@@ -62,19 +54,23 @@ public class SpellCheckTest<Value> {
         writer.close();
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
 
         TST<Integer> st = new TST<Integer>();
 
-        In words = new In(args[0]);
-        In userInput = new In(args[1]);
+        In words = new In(args[0]);     // words.txt
+        In userInput = new In(args[1]); // document.txt
 
         for (int i = 0; words.hasNextLine(); i++) {
             String key = words.readString();
             st.put(key, i);
         }
-        spellCheck(userInput, st);
-
+        try {
+            spellCheck(userInput, st);
+        }
+        catch (Exception e) {
+            StdOut.println("Suck my ass\n");
+        }
     }
 }
 
